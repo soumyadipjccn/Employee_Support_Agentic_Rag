@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  hr-agentic-rag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hr_agentic_rag_copilot
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Enterprise HR Policy Agentic RAG Copilot
+      - APP_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
