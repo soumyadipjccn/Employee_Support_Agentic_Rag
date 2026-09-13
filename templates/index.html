@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name if app_name else "Enterprise HR Policy Agentic RAG Copilot" }}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- TOP NAVIGATION BAR -->
+        <header class="top-nav">
+            <div class="nav-left">
+                <button id="sidebar-toggle" class="icon-btn" title="Toggle Sidebar (Ctrl+\)" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars-staggered"></i>
+                </button>
+                <div class="brand">
+                    <div class="logo-icon">
+                        <i class="fa-solid fa-brain-circuit"></i>
+                        <span class="logo-pulse"></span>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">HR Agentic RAG</span>
+                        <span class="brand-badge">v1.0 Copilot</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-center">
+                <div class="search-shortcut-trigger" id="global-search-trigger" title="Quick Search (Ctrl + K)">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>Ask policy or search knowledge base...</span>
+                    <kbd>Ctrl K</kbd>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <!-- Status Badge -->
+                <div class="status-indicator online" id="backend-status" title="System Connection Status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">RAG Engine Ready</span>
+                </div>
+
+                <div class="nav-actions">
+                    <button class="nav-btn" id="btn-ingest-modal" title="Ingest HR Knowledge Document">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload KB</span>
+                    </button>
+                    <button class="nav-btn secondary" id="btn-audit-modal" title="View Decision Audit Logs">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Audit Log</span>
+                    </button>
+                    <div class="v-divider"></div>
+                    <button class="icon-btn" id="btn-sound-toggle" title="Toggle Sound FX" aria-label="Toggle Sound">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <button class="icon-btn" id="btn-theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-wrapper">
+            <!-- SIDEBAR -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <button class="new-chat-btn" id="btn-new-chat">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>New Conversation</span>
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="section-title">
+                        <i class="fa-solid fa-compass"></i> Popular HR Topics
+                    </h3>
+                    <ul class="topic-list">
+                        <li>
+                            <button class="topic-item" data-query="What is our annual paid time off (PTO) policy and carryover limit?">
+                                <i class="fa-solid fa-umbrella-beach"></i>
+                                <span>Paid Time Off (PTO)</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="topic-item" data-query="How does the remote work equipment stipend reimbursement work?">
+                                <i class="fa-solid fa-laptop-house"></i>
+                                <span>Remote Work Stipend</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="topic-item" data-query="What parental leave benefits are provided for full-time employees?">
+                                <i class="fa-solid fa-baby-carriage"></i>
+                                <span>Parental Leave</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="topic-item" data-query="What is the health insurance enrollment window and medical coverage options?">
+                                <i class="fa-solid fa-heart-pulse"></i>
+                                <span>Health & Medical</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="topic-item" data-query="How can I request tuition reimbursement for professional development certification?">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                                <span>Tuition Assistance</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section history-section">
+                    <h3 class="section-title">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Recent Queries
+                    </h3>
+                    <div class="history-list" id="history-list">
+                        <!-- Populated dynamically -->
+                        <div class="empty-history">No recent queries in session</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="kb-stats-card">
+                        <div class="stats-row">
+                            <span class="stats-label"><i class="fa-solid fa-file-contract"></i> KB Index</span>
+                            <span class="stats-value" id="stats-docs-count">14 Policy Docs</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label"><i class="fa-solid fa-bolt"></i> Vector Engine</span>
+                            <span class="stats-value">Pinecone RAG</span>
+                        </div>
+                        <div class="stats-bar-wrapper">
+                            <div class="stats-bar" style="width: 88%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CHAT CONTENT CONTAINER -->
+            <main class="chat-viewport">
+                <!-- WELCOME HERO VIEW (Shown when chat is empty) -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-hero">
+                        <div class="hero-badge">
+                            <i class="fa-solid fa-sparkles"></i> Autonomous HR RAG Agent
+                        </div>
+                        <h1 class="hero-title">How can I assist your employee query today?</h1>
+                        <p class="hero-subtitle">
+                            Ask anything regarding HR policies, employee benefits, code of conduct, compensation, or company guidelines powered by multi-step agentic document retrieval.
+                        </p>
+                    </div>
+
+                    <div class="cards-grid">
+                        <div class="prompt-card" data-query="What are the rules regarding remote work allowance and monthly Internet reimbursement?">
+                            <div class="card-icon"><i class="fa-solid fa-wifi"></i></div>
+                            <div class="card-content">
+                                <h3>Remote Work Allowance</h3>
+                                <p>Learn about home office equipment, wifi stipend, and claim limits.</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square card-arrow"></i>
+                        </div>
+
+                        <div class="prompt-card" data-query="What is the employee referral bonus structure and payout timeline?">
+                            <div class="card-icon"><i class="fa-solid fa-users-gear"></i></div>
+                            <div class="card-content">
+                                <h3>Referral Bonus Policy</h3>
+                                <p>Discover reward amounts for referring engineering and management candidates.</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square card-arrow"></i>
+                        </div>
+
+                        <div class="prompt-card" data-query="How does annual performance appraisal link to salary increment and equity vesting?">
+                            <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
+                            <div class="card-content">
+                                <h3>Performance & Compensation</h3>
+                                <p>Understand review cycles, promotion criteria, and stock grant vesting schedules.</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square card-arrow"></i>
+                        </div>
+
+                        <div class="prompt-card" data-query="What is the procedure for reporting workplace harassment or grievance escalation?">
+                            <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="card-content">
+                                <h3>Ethics & Grievances</h3>
+                                <p>Confidential reporting channels, non-retaliation protections, and investigation flow.</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square card-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHAT MESSAGES THREAD -->
+                <div class="messages-container hidden" id="messages-container">
+                    <div class="messages-list" id="messages-list">
+                        <!-- Dynamic Chat Messages Inserted Here -->
+                    </div>
+                </div>
+
+                <!-- FLOATING INPUT AREA -->
+                <div class="input-container">
+                    <!-- Quick Pill Suggestions -->
+                    <div class="pills-bar" id="pills-bar">
+                        <button class="pill-btn" data-query="Summarize annual leave entitlement">🏖️ Annual Leave</button>
+                        <button class="pill-btn" data-query="How do I submit medical insurance claims?">🏥 Health Claim</button>
+                        <button class="pill-btn" data-query="What are the official company holidays for 2026?">📅 Company Holidays</button>
+                        <button class="pill-btn" data-query="What is our 401(k) company matching percentage?">💰 401(k) Matching</button>
+                    </div>
+
+                    <div class="input-box">
+                        <button class="input-action-btn" id="btn-mic-input" title="Voice Input (Speech-to-Text)">
+                            <i class="fa-solid fa-microphone"></i>
+                            <span class="mic-wave"></span>
+                        </button>
+
+                        <textarea id="chat-textarea" placeholder="Ask any HR policy or benefit question... (Press Enter to send, Shift+Enter for line break)" rows="1"></textarea>
+
+                        <div class="input-controls">
+                            <button class="icon-btn-small" id="btn-attach" title="Attach file context">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </button>
+                            <button class="send-btn" id="btn-send" title="Send Message (Ctrl + Enter)">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Send</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-footer">
+                        <span class="disclaimer"><i class="fa-solid fa-circle-info"></i> Agentic RAG synthesizes responses from verified HR Knowledge Base documents.</span>
+                        <span class="char-count" id="char-count">0 / 3000</span>
+                    </div>
+                </div>
+            </main>
+
+            <!-- RIGHT AGENTIC TRACE DRAWER -->
+            <aside class="trace-drawer" id="trace-drawer">
+                <div class="drawer-header">
+                    <div class="drawer-title">
+                        <i class="fa-solid fa-diagram-project"></i>
+                        <span>Agentic Decision Trace</span>
+                    </div>
+                    <button class="icon-btn-small" id="btn-close-drawer" title="Close Trace Drawer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="drawer-content">
+                    <!-- Workflow Pipeline Diagram -->
+                    <div class="trace-section">
+                        <h4 class="trace-subtitle">Execution Pipeline</h4>
+                        <div class="pipeline-flow">
+                            <div class="pipeline-step" id="step-rewrite">
+                                <div class="step-icon"><i class="fa-solid fa-pen-fancy"></i></div>
+                                <div class="step-info">
+                                    <div class="step-title">Query Optimization</div>
+                                    <div class="step-detail" id="step-detail-rewrite">Rewriting query for semantic alignment...</div>
+                                </div>
+                            </div>
+                            <div class="pipeline-connector"></div>
+                            <div class="pipeline-step" id="step-search">
+                                <div class="step-icon"><i class="fa-solid fa-database"></i></div>
+                                <div class="step-info">
+                                    <div class="step-title">Vector Search</div>
+                                    <div class="step-detail" id="step-detail-search">Querying Pinecone vector database (k=4)...</div>
+                                </div>
+                            </div>
+                            <div class="pipeline-connector"></div>
+                            <div class="pipeline-step" id="step-policy">
+                                <div class="step-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                                <div class="step-info">
+                                    <div class="step-title">Policy Verification</div>
+                                    <div class="step-detail" id="step-detail-policy">Evaluating compliance constraints & scope...</div>
+                                </div>
+                            </div>
+                            <div class="pipeline-connector"></div>
+                            <div class="pipeline-step" id="step-synthesis">
+                                <div class="step-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                                <div class="step-info">
+                                    <div class="step-title">Synthesize Response</div>
+                                    <div class="step-detail" id="step-detail-synthesis">Formatting answer with document citations...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Retrieved Sources & Citations -->
+                    <div class="trace-section">
+                        <h4 class="trace-subtitle">Retrieved Sources</h4>
+                        <div class="sources-list" id="sources-list">
+                            <div class="empty-sources">No active citations loaded</div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Trace Logs -->
+                    <div class="trace-section">
+                        <div class="trace-subtitle-row">
+                            <h4 class="trace-subtitle">Trace Log Payload</h4>
+                            <button class="copy-code-btn" id="btn-copy-trace"><i class="fa-regular fa-copy"></i> Copy</button>
+                        </div>
+                        <pre class="trace-code-block" id="trace-json"><code>// Agent execution trace details will appear here</code></pre>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- DOCUMENT INGESTION MODAL -->
+    <div class="modal-overlay hidden" id="modal-ingest">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                    <span>Ingest Policy Document into RAG Knowledge Base</span>
+                </div>
+                <button class="icon-btn-small" id="btn-close-ingest-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="ingest-form">
+                    <div class="form-group">
+                        <label for="admin-key-input">Admin API Key</label>
+                        <input type="password" id="admin-key-input" placeholder="Enter admin key (Default: change-me-in-production)" value="change-me-in-production" required>
+                    </div>
+
+                    <div class="dropzone" id="file-dropzone">
+                        <input type="file" id="file-input" accept=".pdf,.txt,.md,.docx" hidden>
+                        <div class="dropzone-content">
+                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                            <p class="dropzone-text">Drag & drop policy file here or <span>browse files</span></p>
+                            <span class="dropzone-hint">Supported formats: .pdf, .txt, .md, .docx (Max 10MB)</span>
+                        </div>
+                        <div class="file-preview hidden" id="file-preview">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <span id="selected-filename">document.pdf</span>
+                            <button type="button" class="remove-file-btn" id="btn-remove-file"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="ingest-progress hidden" id="ingest-progress">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text">Chunking and embedding document...</span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="btn-cancel-ingest">Cancel</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-ingest">
+                            <i class="fa-solid fa-upload"></i> Start Ingestion
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIT LOG MODAL -->
+    <div class="modal-overlay hidden" id="modal-audit">
+        <div class="modal-box modal-wide">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-shield-cat"></i>
+                    <span>HR Query Audit & Governance Logs</span>
+                </div>
+                <button class="icon-btn-small" id="btn-close-audit-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="audit-summary-cards">
+                    <div class="audit-card">
+                        <span class="card-num">100%</span>
+                        <span class="card-lbl">Policy Compliance</span>
+                    </div>
+                    <div class="audit-card">
+                        <span class="card-num">180ms</span>
+                        <span class="card-lbl">Avg Response Time</span>
+                    </div>
+                    <div class="audit-card">
+                        <span class="card-num">Pinecone</span>
+                        <span class="card-lbl">Primary Knowledge Provider</span>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="audit-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Query</th>
+                                <th>Source Used</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-table-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Custom App JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
