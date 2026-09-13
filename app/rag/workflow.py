@@ -18,13 +18,23 @@ _web_search = None
 def llm():
     global _llm
     if _llm is None:
-        if not settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY is missing")
-        _llm = ChatOpenAI(
-            model=settings.openai_model,
-            temperature=0,
-            api_key=settings.openai_api_key,
-        )
+        api_key = settings.nvidia_api_key or settings.openai_api_key
+        if not api_key:
+            raise RuntimeError("NVIDIA_API_KEY or OPENAI_API_KEY is missing")
+        
+        base_url = settings.openai_base_url
+        if not base_url and (settings.nvidia_api_key or "/" in settings.openai_model):
+            base_url = "https://integrate.api.nvidia.com/v1"
+            
+        kwargs = {
+            "model": settings.openai_model,
+            "temperature": 0,
+            "api_key": api_key,
+        }
+        if base_url:
+            kwargs["base_url"] = base_url
+            
+        _llm = ChatOpenAI(**kwargs)
     return _llm
 
 

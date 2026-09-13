@@ -1,6 +1,5 @@
 import time
-from pinecone import Pinecone , ServerlessSpec
-from langchain_openai import OpenAIEmbeddings
+from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
 from app.core.config import get_settings
 
@@ -14,27 +13,69 @@ EMBEDDING_DIMENSIONS = {
     "text-embedding-3-large": 3072,
     "text-embedding-ada-002": 1536,
     "all-minilm-l6-v2": 384,
+    "intfloat/e5-small-v2": 384,
+    "intfloat/multilingual-e5-small": 384,
+    "nvidia/e5-small-v2": 384,
+    "e5-small-v2": 384,
+    "e5-small": 384,
+    "intfloat/e5-base-v2": 768,
+    "intfloat/e5-large-v2": 1024,
 }
 
 def get_embedding_dimension(model_name: str | None = None) -> int:
-     name = (model_name or settings.embedding_model or "").strip()
-     if not name:
+    name = (model_name or settings.embedding_model or "").strip()
+    if not name:
         raise RuntimeError("Embedding model is not configured")
-     normalized = name.lower()
-     if normalized in EMBEDDING_DIMENSIONS:
-         return EMBEDDING_DIMENSIONS[normalized]
-     if "text-embedding-3-small" in normalized:
-         return 1536
-     if "text-embedding-3-large" in normalized:
-        return 3072
-     if "text-embedding-ada-002" in normalized:
-        return 1536
-     if "all-minilm" in normalized:
+    normalized = name.lower()
+    if normalized in EMBEDDING_DIMENSIONS:
+        return EMBEDDING_DIMENSIONS[normalized]
+    if "e5-small" in normalized or "e5_small" in normalized:
         return 384
-     raise ValueError(
+    if "e5-base" in normalized:
+        return 768
+    if "e5-large" in normalized:
+        return 1024
+    if "text-embedding-3-small" in normalized or "text-embedding-ada-002" in normalized:
+        return 1536
+    if "text-embedding-3-large" in normalized:
+        return 3072
+    if "all-minilm" in normalized:
+        return 384
+    raise ValueError(
         f"Unsupported embedding model '{model_name or settings.embedding_model}' for Pinecone. "
         "Add the matching dimension to EMBEDDING_DIMENSIONS."
     )
+
+def get_embeddings():
+    global _embeddings
+    if _embeddings is None:
+        model_name = settings.embedding_model
+        provider = settings.embedding_provider.lower()
+        
+        if provider == "huggingface" or any(k in model_name.lower() for k in ["e5-small", "e5-base", "e5-large", "minilm", "intfloat", "sentence-transformers"]):
+            try:
+                from langchain_huggingface import HuggingFaceEmbeddings
+            except ImportError:
+                from langchain_community.embeddings import HuggingFaceEmbeddings
+            
+            _embeddings = HuggingFaceEmbeddings(
+                model_name=model_name,
+                encode_kwargs={"normalize_embeddings": True},
+            )
+        else:
+            from langchain_openai import OpenAIEmbeddings
+            api_key = settings.nvidia_api_key or settings.openai_api_key
+            base_url = settings.embedding_base_url or settings.openai_base_url or None
+            
+            kwargs = {"model": model_name}
+            if api_key:
+                kwargs["api_key"] = api_key
+            if base_url:
+                kwargs["base_url"] = base_url
+                
+            _embeddings = OpenAIEmbeddings(**kwargs)
+            
+    return _embeddings
 
 def ensure_index():
     if not settings.pinecone_api_key:

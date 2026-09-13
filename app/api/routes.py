@@ -35,8 +35,8 @@ def chat(payload: ChatRequest):
 
            }
 
-    except Exception as exe:
-        raise HTTPException(status_code=500,detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 @router.post("/ingest")
 async def ingest(file: UploadFile = File(...), x_admin_key: str = Header(default="")):
